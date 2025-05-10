@@ -147,16 +147,28 @@
         alignprops.insert(prop, body.named().at(prop))
       }
     }
-    let alignwrap(content) = block(
-      ..alignprops,
-      breakable: breakable,
-      width: 100%,
-      if "align" in body.named() and body.named().align != none {
-        align(body.named().align, content)
+    let alignwrap(content) = layout(size => {
+      let bottom-margin = if page.margin == auto {
+        let small-side = calc.min(page.height, page.width)
+        (2.5 / 21) * small-side // According to docs, this is the 'auto' margin
       } else {
-        content
-      },
-    )
+        measure(line(length: page.margin.bottom)).width
+      }
+
+      let page-remains = size.height - (here().position().y - bottom-margin)
+      let stick = page-remains < 2em.to-absolute() // 2 lines
+      block(
+        ..alignprops,
+        breakable: breakable,
+        width: 100%,
+        sticky: stick,
+        if "align" in body.named() and body.named().align != none {
+          align(body.named().align, content)
+        } else {
+          content
+        },
+      )
+    })
 
     let showyblock = context {
       let my-state = state("showybox-" + id, 0pt)
